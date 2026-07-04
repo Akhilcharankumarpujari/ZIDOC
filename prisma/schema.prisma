@@ -20,7 +20,7 @@ model User {
 }
 
 model File {
-  id           String   @id @default(cuid())
+  id           String       @id @default(cuid())
   name         String
   originalName String
   type         String
@@ -28,9 +28,28 @@ model File {
   size         Int
   storageKey   String
   ownerId      String
-  users        String[] @default([])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  users        String[]     @default([])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  owner        User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner        User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  sharedLinks  SharedLink[]
+}
+
+model SharedLink {
+  id            String    @id @default(cuid())
+  token         String    @unique
+  documentId    String
+  createdBy     String
+  password      String?   // hashed password
+  expiresAt     DateTime?
+  allowDownload Boolean   @default(true)
+  isActive      Boolean   @default(true)
+  downloadCount Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  file          File      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("shared_links")
 }
