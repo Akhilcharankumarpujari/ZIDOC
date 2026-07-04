@@ -16,7 +16,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  files     File[]
+  files       File[]
+  collections Collection[]
 }
 
 model File {
@@ -34,6 +35,7 @@ model File {
 
   owner        User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   sharedLinks  SharedLink[]
+  submissions  Submission[]
 }
 
 model SharedLink {
@@ -52,4 +54,57 @@ model SharedLink {
   file          File      @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@map("shared_links")
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  ownerId     String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner        User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  requirements Requirement[]
+
+  @@map("collections")
+}
+
+model Requirement {
+  id                 String       @id @default(cuid())
+  collectionId       String
+  title              String
+  description        String?
+  uploadToken        String       @unique
+  deadline           DateTime?
+  allowMultipleFiles Boolean      @default(false)
+  maxFileSize        Int          @default(10485760) // default 10MB
+  acceptedFileTypes  String[]     @default([])
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  collection  Collection   @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+
+  @@map("requirements")
+}
+
+model Submission {
+  id                String    @id @default(cuid())
+  requirementId     String
+  fileId            String
+  studentName       String
+  studentRollNumber String
+  studentEmail      String?
+  remarks           String?
+  status            String    @default("Pending") // Pending, Reviewed, Approved, Rejected
+  submittedAt       DateTime  @default(now())
+  reviewedAt        DateTime?
+  reviewedBy        String?
+
+  requirement Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  file        File        @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@map("submissions")
 }

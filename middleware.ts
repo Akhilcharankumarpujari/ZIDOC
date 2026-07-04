@@ -5,7 +5,7 @@ export function middleware(req: NextRequest) {
   const token = req.cookies.get("session-token")?.value;
   const isLoggedIn = !!token;
   const isAuthPage = req.nextUrl.pathname.startsWith("/sign-in") || req.nextUrl.pathname.startsWith("/sign-up");
-  const isPublicPage = req.nextUrl.pathname.startsWith("/share");
+  const isPublicPage = req.nextUrl.pathname.startsWith("/share") || req.nextUrl.pathname.startsWith("/upload");
 
   if (isAuthPage || isPublicPage) {
     if (isAuthPage && isLoggedIn) {
