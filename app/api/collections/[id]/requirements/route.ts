@@ -5,6 +5,7 @@ import crypto from "crypto";
 import { z } from "zod";
 
 const createRequirementSchema = z.object({
+  categoryId: z.string().min(1, "Category ID is required"),
   title: z.string().min(1, "Title is required"),
   description: z.string().optional().nullable(),
   deadline: z.string().optional().nullable(),
@@ -42,7 +43,16 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { title, description, deadline, allowMultipleFiles, maxFileSize, acceptedFileTypes } = validation.data;
+    const { categoryId, title, description, deadline, allowMultipleFiles, maxFileSize, acceptedFileTypes } = validation.data;
+
+    // Verify category exists and belongs to the collection
+    const category = await prisma.category.findFirst({
+      where: { id: categoryId, collectionId },
+    });
+
+    if (!category) {
+      return NextResponse.json({ error: "Category not found in this collection" }, { status: 404 });
+    }
 
     // Generate unique upload token (8 bytes hex = 16 characters)
     let uploadToken = "";
@@ -59,7 +69,7 @@ export async function POST(
 
     const requirement = await prisma.requirement.create({
       data: {
-        collectionId,
+        categoryId,
         title,
         description: description || null,
         uploadToken,

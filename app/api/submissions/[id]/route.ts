@@ -30,7 +30,11 @@ export async function PATCH(
       include: {
         requirement: {
           include: {
-            collection: true,
+            category: {
+              include: {
+                collection: true,
+              },
+            },
           },
         },
       },
@@ -40,7 +44,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Submission not found" }, { status: 404 });
     }
 
-    if (submission.requirement.collection.ownerId !== currentUser.$id) {
+    if (submission.requirement.category.collection.ownerId !== currentUser.$id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

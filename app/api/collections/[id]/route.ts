@@ -24,16 +24,21 @@ export async function GET(
     const collection = await prisma.collection.findUnique({
       where: { id },
       include: {
-        requirements: {
+        categories: {
           include: {
-            submissions: {
+            requirements: {
               include: {
-                file: true,
+                submissions: {
+                  include: {
+                    file: true,
+                  },
+                  orderBy: { submittedAt: "desc" },
+                },
               },
-              orderBy: { submittedAt: "desc" },
+              orderBy: { createdAt: "asc" },
             },
           },
-          orderBy: { createdAt: "asc" },
+          orderBy: { sortOrder: "asc" },
         },
       },
     });
@@ -46,34 +51,47 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Format requirements with submissions details
-    const formattedRequirements = collection.requirements.map((req) => {
-      let pendingCount = 0;
-      let approvedCount = 0;
-      let rejectedCount = 0;
+    // Format categories with requirements and submissions details
+    const formattedCategories = collection.categories.map((cat) => {
+      const formattedRequirements = cat.requirements.map((req) => {
+        let pendingCount = 0;
+        let approvedCount = 0;
+        let rejectedCount = 0;
 
-      req.submissions.forEach((sub) => {
-        if (sub.status === "Pending") pendingCount++;
-        else if (sub.status === "Approved") approvedCount++;
-        else if (sub.status === "Rejected") rejectedCount++;
+        req.submissions.forEach((sub) => {
+          if (sub.status === "Pending") pendingCount++;
+          else if (sub.status === "Approved") approvedCount++;
+          else if (sub.status === "Rejected") rejectedCount++;
+        });
+
+        return {
+          id: req.id,
+          categoryId: req.categoryId,
+          title: req.title,
+          description: req.description,
+          uploadToken: req.uploadToken,
+          deadline: req.deadline,
+          allowMultipleFiles: req.allowMultipleFiles,
+          maxFileSize: req.maxFileSize,
+          acceptedFileTypes: req.acceptedFileTypes,
+          createdAt: req.createdAt,
+          updatedAt: req.updatedAt,
+          submissions: req.submissions,
+          submissionsCount: req.submissions.length,
+          pendingCount,
+          approvedCount,
+          rejectedCount,
+        };
       });
 
       return {
-        id: req.id,
-        title: req.title,
-        description: req.description,
-        uploadToken: req.uploadToken,
-        deadline: req.deadline,
-        allowMultipleFiles: req.allowMultipleFiles,
-        maxFileSize: req.maxFileSize,
-        acceptedFileTypes: req.acceptedFileTypes,
-        createdAt: req.createdAt,
-        updatedAt: req.updatedAt,
-        submissions: req.submissions,
-        submissionsCount: req.submissions.length,
-        pendingCount,
-        approvedCount,
-        rejectedCount,
+        id: cat.id,
+        name: cat.name,
+        description: cat.description,
+        sortOrder: cat.sortOrder,
+        createdAt: cat.createdAt,
+        updatedAt: cat.updatedAt,
+        requirements: formattedRequirements,
       };
     });
 
@@ -84,7 +102,7 @@ export async function GET(
       isActive: collection.isActive,
       createdAt: collection.createdAt,
       updatedAt: collection.updatedAt,
-      requirements: formattedRequirements,
+      categories: formattedCategories,
     });
   } catch (error) {
     console.error("Error fetching collection detail:", error);

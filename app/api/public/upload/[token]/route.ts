@@ -13,10 +13,15 @@ export async function GET(
     const requirement = await prisma.requirement.findUnique({
       where: { uploadToken: token },
       include: {
-        collection: {
-          select: {
-            title: true,
-            isActive: true,
+        category: {
+          include: {
+            collection: {
+              select: {
+                id: true,
+                title: true,
+                isActive: true,
+              },
+            },
           },
         },
       },
@@ -26,7 +31,7 @@ export async function GET(
       return NextResponse.json({ error: "Upload link not found" }, { status: 404 });
     }
 
-    if (!requirement.collection.isActive) {
+    if (!requirement.category.collection.isActive) {
       return NextResponse.json({ error: "This document collection has been deactivated or archived." }, { status: 403 });
     }
 
@@ -42,7 +47,8 @@ export async function GET(
       allowMultipleFiles: requirement.allowMultipleFiles,
       maxFileSize: requirement.maxFileSize,
       acceptedFileTypes: requirement.acceptedFileTypes,
-      collectionTitle: requirement.collection.title,
+      collectionTitle: requirement.category.collection.title,
+      categoryName: requirement.category.name,
     });
   } catch (error) {
     console.error("Error fetching public requirement details:", error);
@@ -60,7 +66,11 @@ export async function POST(
     const requirement = await prisma.requirement.findUnique({
       where: { uploadToken: token },
       include: {
-        collection: true,
+        category: {
+          include: {
+            collection: true,
+          },
+        },
       },
     });
 
@@ -68,7 +78,7 @@ export async function POST(
       return NextResponse.json({ error: "Upload link not found" }, { status: 404 });
     }
 
-    if (!requirement.collection.isActive) {
+    if (!requirement.category.collection.isActive) {
       return NextResponse.json({ error: "This collection is inactive." }, { status: 403 });
     }
 
@@ -122,7 +132,7 @@ export async function POST(
     
     // Generate a unique storage key
     const uniqueId = Math.random().toString(36).substring(2, 15);
-    const storageKey = `submissions/${requirement.collectionId}/${requirement.id}/${uniqueId}-${file.name}`;
+    const storageKey = `submissions/${requirement.category.collectionId}/${requirement.id}/${uniqueId}-${file.name}`;
     
     // Upload to storage
     await storageService.uploadFile(buffer, storageKey, file.type || "application/octet-stream");
@@ -136,7 +146,7 @@ export async function POST(
         extension: fileTypeInfo.extension,
         size: file.size,
         storageKey,
-        ownerId: requirement.collection.ownerId,
+        ownerId: requirement.category.collection.ownerId,
       },
     });
 

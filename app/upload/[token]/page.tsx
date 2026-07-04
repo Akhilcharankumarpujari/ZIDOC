@@ -17,6 +17,7 @@ interface PublicRequirement {
   maxFileSize: number;
   acceptedFileTypes: string[];
   collectionTitle: string;
+  categoryName: string;
 }
 
 export default function PublicUploadPage() {
@@ -190,9 +191,14 @@ export default function PublicUploadPage() {
           <form onSubmit={handleSubmit} className="flex flex-col space-y-6">
             {/* Requirement Context Panel */}
             <div className="border-b border-light-300 pb-5 text-left">
-              <span className="text-[10px] bg-brand/10 text-brand px-3 py-1 rounded-full font-bold uppercase tracking-wider block w-fit mb-2">
-                {requirement?.collectionTitle}
-              </span>
+              <div className="flex gap-2 mb-2 flex-wrap">
+                <span className="text-[10px] bg-brand/10 text-brand px-3 py-1 rounded-full font-bold uppercase tracking-wider block w-fit">
+                  {requirement?.collectionTitle}
+                </span>
+                <span className="text-[10px] bg-light-300 text-light-200 px-3 py-1 rounded-full font-bold uppercase tracking-wider block w-fit">
+                  {requirement?.categoryName}
+                </span>
+              </div>
               <h2 className="text-xl font-bold text-light-100">{requirement?.title}</h2>
               {requirement?.description && (
                 <p className="text-xs text-light-200 mt-2">{requirement.description}</p>

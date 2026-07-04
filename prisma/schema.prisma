@@ -57,23 +57,39 @@ model SharedLink {
 }
 
 model Collection {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  ownerId     String
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  ownerId         String
+  isActive        Boolean  @default(true)
+  collectionToken String   @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  owner        User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  requirements Requirement[]
+  owner      User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  categories Category[]
 
   @@map("collections")
 }
 
+model Category {
+  id           String   @id @default(cuid())
+  collectionId String
+  name         String
+  description  String?
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  collection   Collection    @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  requirements Requirement[]
+
+  @@map("categories")
+}
+
 model Requirement {
   id                 String       @id @default(cuid())
-  collectionId       String
+  categoryId         String
   title              String
   description        String?
   uploadToken        String       @unique
@@ -84,7 +100,7 @@ model Requirement {
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
-  collection  Collection   @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  category    Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   submissions Submission[]
 
   @@map("requirements")

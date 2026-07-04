@@ -38,7 +38,7 @@ export const Chart = ({ used = 0 }: { used: number }) => {
           <RadialBarChart
             data={chartData}
             startAngle={90}
-            endAngle={Number(calculatePercentage(used)) + 90}
+            endAngle={(Number(calculatePercentage(used)) || 0) + 90}
             innerRadius={80}
             outerRadius={110}
           >

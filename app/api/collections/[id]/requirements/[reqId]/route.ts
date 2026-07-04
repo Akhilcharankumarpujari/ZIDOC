@@ -10,6 +10,7 @@ const updateRequirementSchema = z.object({
   allowMultipleFiles: z.boolean().optional(),
   maxFileSize: z.number().optional(),
   acceptedFileTypes: z.array(z.string()).optional(),
+  categoryId: z.string().optional(),
 });
 
 export async function PATCH(
@@ -43,13 +44,28 @@ export async function PATCH(
 
     const requirement = await prisma.requirement.findUnique({
       where: { id: reqId },
+      include: {
+        category: true,
+      },
     });
 
-    if (!requirement || requirement.collectionId !== collectionId) {
+    if (!requirement || requirement.category.collectionId !== collectionId) {
       return NextResponse.json({ error: "Requirement not found" }, { status: 404 });
     }
 
-    const { title, description, deadline, allowMultipleFiles, maxFileSize, acceptedFileTypes } = validation.data;
+    const { categoryId, title, description, deadline, allowMultipleFiles, maxFileSize, acceptedFileTypes } = validation.data;
+
+    // Verify category exists and belongs to the collection if moving
+    if (categoryId) {
+      const targetCategory = await prisma.category.findFirst({
+        where: { id: categoryId, collectionId },
+      });
+
+      if (!targetCategory) {
+        return NextResponse.json({ error: "Target category not found in this collection" }, { status: 404 });
+      }
+    }
+
     const deadlineDate = deadline === null ? null : deadline !== undefined ? new Date(deadline) : undefined;
 
     const updatedRequirement = await prisma.requirement.update({
@@ -61,6 +77,7 @@ export async function PATCH(
         ...(allowMultipleFiles !== undefined && { allowMultipleFiles }),
         ...(maxFileSize !== undefined && { maxFileSize }),
         ...(acceptedFileTypes !== undefined && { acceptedFileTypes }),
+        ...(categoryId !== undefined && { categoryId }),
       },
     });
 
@@ -97,9 +114,12 @@ export async function DELETE(
 
     const requirement = await prisma.requirement.findUnique({
       where: { id: reqId },
+      include: {
+        category: true,
+      },
     });
 
-    if (!requirement || requirement.collectionId !== collectionId) {
+    if (!requirement || requirement.category.collectionId !== collectionId) {
       return NextResponse.json({ error: "Requirement not found" }, { status: 404 });
     }
 
